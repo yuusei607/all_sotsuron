@@ -9,7 +9,7 @@ from scipy.cluster.hierarchy import dendrogram, linkage
 
 # ==========================================
 # 設定: 解析したいJSONファイル名を指定してください
-JSON_FILE = "experiment_result_20251216_141720.json" 
+JSON_FILE = "experiment_result_8stimuli_20251221_155626.json" 
 # ==========================================
 
 def analyze_experiment(json_path):
