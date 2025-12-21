@@ -1,0 +1,48 @@
+Metadata-Version: 2.4
+Name: pyautd3_link_ethercrab
+Version: 37.0.1
+Summary: autd3-link-ethercrab library wrapper for python
+Author-email: Shun Suzuki <suzuki@hapis.k.u-tokyo.ac.jp>
+License-Expression: MIT
+Project-URL: Repository, https://github.com/shinolab/pyautd3_link_ethercrab.git
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: 3.14
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: MacOS :: MacOS X
+Classifier: Operating System :: POSIX
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+License-File: LICENSE
+License-File: ThirdPartyNotices.txt
+Requires-Dist: numpy>=2
+Requires-Dist: pyautd3==37.0.1
+Dynamic: license-file
+
+# pyautd3_link_ethercrab
+
+![build](https://github.com/shinolab/pyautd3_link_ethercrab/workflows/build/badge.svg)
+[![codecov](https://codecov.io/gh/shinolab/pyautd3_link_ethercrab/graph/badge.svg?precision=2)](https://codecov.io/gh/shinolab/pyautd3_link_ethercrab)
+[![PyPI version](https://img.shields.io/pypi/v/pyautd3_link_ethercrab)](https://pypi.org/project/pyautd3_link_ethercrab/)
+
+[autd3-link-ethercrab](https://github.com/shinolab/autd3-rs) wrapper library for python3.12+
+
+## Install
+
+```
+pip install pyautd3_link_ethercrab
+```
+
+## Example
+
+see [example](./example)
+
+## LICENSE
+
+MIT
+
+This library depends on some third-party libraries. Please check their licenses in the `ThirdPartyNotices.txt` in the distributed package.
+
+# Author
+
+Shun Suzuki, 2025
