@@ -7,10 +7,15 @@ from sklearn.manifold import MDS
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 from scipy.spatial.distance import pdist, squareform
+import os
 
 # ==========================================
 # ★ここに18刺激実験の結果ファイル名（JSON）を指定してください
-JSON_FILE = "experiment_result_20251216_141720.json" 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+JSON_FILE = os.path.join(BASE_DIR, "../results/raw_results/experiment_result_20251212_174248.json")
+
+# アンカー刺激ID（スケーリングに使用）
+ANCHOR_IDS = [0, 17]
 # ==========================================
 
 def analyze_18stimuli_with_plots(json_path):
@@ -46,10 +51,22 @@ def analyze_18stimuli_with_plots(json_path):
         coords = np.array([[item["x"], item["y"]] for item in items])
         dists_raw = squareform(pdist(coords))
         
-        # スケーリング
-        max_dist = np.max(dists_raw)
-        if max_dist > 0: dists_scaled = dists_raw / max_dist
-        else: dists_scaled = dists_raw
+        # スケーリング: アンカー刺激間の距離を基準にする
+        anchor_dist = None
+        if ANCHOR_IDS[0] in ids and ANCHOR_IDS[1] in ids:
+            idx_0 = ids.index(ANCHOR_IDS[0])
+            idx_17 = ids.index(ANCHOR_IDS[1])
+            anchor_dist = dists_raw[idx_0, idx_17]
+        
+        if anchor_dist is not None and anchor_dist > 0:
+            dists_scaled = dists_raw / anchor_dist
+        else:
+            # フォールバック（アンカーがない試行は最大距離で）
+            max_dist = np.max(dists_raw)
+            if max_dist > 0:
+                dists_scaled = dists_raw / max_dist
+            else:
+                dists_scaled = dists_raw
 
         # 重み (距離の2乗)
         weights = dists_raw ** 2
@@ -146,7 +163,7 @@ def analyze_18stimuli_with_plots(json_path):
         
         # 保存
         save_name = f"MDS_18stim_by_{filename_suffix}.png"
-        plt.savefig(save_name, dpi=300)
+        # plt.savefig(save_name, dpi=300)
         print(f"Saved plot: {save_name}")
         plt.show()
 

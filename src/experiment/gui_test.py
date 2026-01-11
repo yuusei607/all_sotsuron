@@ -9,23 +9,40 @@ from collections import defaultdict
 from datetime import datetime
 
 # AUTD3関連のインポート
-from pyautd3 import (
-    AUTD3, Controller, FocusOption, Hz, Silencer, Sine, SineOption,
-    EulerAngles, rad, FociSTM, Static
-)
-from pyautd3.link.simulator import Simulator
-from pyautd3.link.ethercrab import EtherCrab, EtherCrabOption, Status
+# ※ 環境にpyautd3が入っていない場合は、ここのimportもコメントアウトし、
+#    下のDummyAUTDクラス以外で AUTD3関連の定数(w, hなど)を使っている場所を適当な数値に置き換える必要があります。
+try:
+    from pyautd3 import (
+        AUTD3, Controller, FocusOption, Hz, Silencer, Sine, SineOption,
+        EulerAngles, rad, FociSTM, Static
+    )
+    from pyautd3.link.simulator import Simulator
+    from pyautd3.link.ethercrab import EtherCrab, EtherCrabOption, Status
+    
+    # 定数が取得できる場合は取得
+    w = AUTD3.DEVICE_WIDTH
+    h = AUTD3.DEVICE_HEIGHT
+except ImportError:
+    # ライブラリ自体がない環境でのGUIテスト用フォールバック
+    w = 192.0
+    h = 151.4
+    print("Warning: pyautd3 not found. Using dummy constants.")
 
 # --- 設定値 ---
-w = AUTD3.DEVICE_WIDTH
-h = AUTD3.DEVICE_HEIGHT
 CANVAS_SIZE = 800   # 描画領域のサイズ (ピクセル)
 ARENA_RADIUS = 350
-NODE_RADIUS = 20    # 点の大きさ（操作しやすいよう少し大きくしました）
+NODE_RADIUS = 20    # 点の大きさ
 ITEMS_PER_TRIAL = 5 # 1回の提示数
 
-def err_handler(idx: int, status: Status) -> None:
+def err_handler(idx: int, status) -> None:
     pass
+
+# --- ダミーコントローラークラス (実機なし動作用) ---
+class DummyAUTD:
+    def send(self, command):
+        # 何もしない（またはログを出す）
+        # print("Mock: Sending command to AUTD...")
+        pass
 
 # --- Greedy法によるトライアル生成クラス ---
 class GreedyTrialGenerator:
@@ -105,12 +122,11 @@ def generate_points(distance, center):
     return points
 
 # --- GUIアプリケーションクラス ---
-# --- GUIアプリケーションクラス ---
 class TactileMapApp:
     def __init__(self, root, autd_controller):
         self.root = root
         self.autd = autd_controller
-        self.root.title("Tactile Spatial Arrangement Task (Multi-arrangement)")
+        self.root.title("Tactile Spatial Arrangement Task (GUI CHECK MODE)")
 
         # AUTD座標の中心設定
         self.center = np.array([1.5 * w, h, 200.0])
@@ -123,7 +139,7 @@ class TactileMapApp:
         self.trial_list = generator.trials
         self.current_trial_idx = 0
         
-        # 結果保存用（行ったり来たりできるよう、あらかじめ枠を作っておく）
+        # 結果保存用
         self.results = [None] * len(self.trial_list)
 
         # ドラッグ管理用
@@ -169,19 +185,15 @@ class TactileMapApp:
         self.canvas = tk.Canvas(self.root, width=CANVAS_SIZE, height=CANVAS_SIZE, bg="white")
         self.canvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-        # --- 修正: 円形アリーナの描画 ---
-        # キャンバスの中心計算
+        # 円形アリーナの描画
         cx, cy = CANVAS_SIZE / 2, CANVAS_SIZE / 2
         
-        # アリーナ（白い円）を描画
-        # 背景が白なので、少しグレーの枠線で円を表現します
         self.canvas.create_oval(
             cx - ARENA_RADIUS, cy - ARENA_RADIUS,
             cx + ARENA_RADIUS, cy + ARENA_RADIUS,
-            outline="lightgrey", width=3, dash=(5, 5), # 点線で見やすく
-            tags="arena_bg" # タグをつけておく（消さないように管理するため）
+            outline="lightgrey", width=3, dash=(5, 5),
+            tags="arena_bg"
         )
-        # 中心点もあると配置しやすいので描いておく
         self.canvas.create_oval(cx-2, cy-2, cx+2, cy+2, fill="black", outline="")
 
         # 操作パネル
@@ -205,19 +217,14 @@ class TactileMapApp:
         self.canvas.tag_bind("token", "<B1-Motion>", self.on_drag)
 
     def load_trial(self):
-        """現在のトライアルIDに基づいてキャンバスをリセット・再描画"""
-        # "arena_bg" というタグがついた背景円以外を削除する
-        # (全部 delete("all") すると円も消えちゃうので)
         items = self.canvas.find_all()
         for item in items:
             tags = self.canvas.gettags(item)
-            if "arena_bg" not in tags: # 背景以外を消す
+            if "arena_bg" not in tags:
                 self.canvas.delete(item)
         
-        # 進捗表示更新
         self.lbl_progress.config(text=f"Trial: {self.current_trial_idx + 1} / {len(self.trial_list)}")
         
-        # ボタン制御
         if self.current_trial_idx == len(self.trial_list) - 1:
             self.btn_next.config(text="Finish & Save", bg="orange")
         else:
@@ -228,22 +235,15 @@ class TactileMapApp:
         else:
             self.btn_prev.config(state=tk.NORMAL)
 
-        # アイテムリスト
         current_items_indices = self.trial_list[self.current_trial_idx]
         
-        # 保存データ確認
         saved_data = self.results[self.current_trial_idx]
         saved_positions = {}
         if saved_data is not None:
             for item in saved_data["items"]:
                 saved_positions[item["id"]] = (item["x"], item["y"])
         
-        # --- 初期配置ロジック ---
-        # 論文では「円の周囲（Seating area）」に置くのが基本ですが、
-        # 操作しやすさ優先で「円の内側の縁」に並べるようにします。
-        
         cx, cy = CANVAS_SIZE / 2, CANVAS_SIZE / 2
-        # 初期配置の半径（アリーナより少し小さくする）
         init_radius = ARENA_RADIUS - 40 
         angle_step = 2 * math.pi / len(current_items_indices)
         
@@ -256,7 +256,6 @@ class TactileMapApp:
                 x, y = saved_positions[item_idx]
             else:
                 angle = i * angle_step + random.uniform(-0.1, 0.1)
-                # アリーナの境界付近に配置
                 x = cx + init_radius * math.cos(angle)
                 y = cy + init_radius * math.sin(angle)
             
@@ -282,7 +281,6 @@ class TactileMapApp:
         self.canvas.create_text(x, y, text=str(param['id']), tags=("token", tag))
 
     def _save_current_screen(self):
-        """現在の画面の状態をself.resultsに一時保存"""
         trial_data = {
             "trial_index": self.current_trial_idx,
             "items": []
@@ -299,13 +297,10 @@ class TactileMapApp:
                     "y": cy,
                     "params": self.all_params[item["id"]]
                 })
-        # インデックスを指定して保存（上書き可能にする）
         self.results[self.current_trial_idx] = trial_data
 
     def next_trial(self):
-        """次のトライアルへ"""
-        self._save_current_screen() # まず保存
-        
+        self._save_current_screen()
         if self.current_trial_idx < len(self.trial_list) - 1:
             self.current_trial_idx += 1
             self.load_trial()
@@ -313,14 +308,11 @@ class TactileMapApp:
             self.save_and_quit()
 
     def prev_trial(self):
-        """前のトライアルへ（追加）"""
-        self._save_current_screen() # 戻る前にも念のため現状を保存しておく（戻ってまた進んだときに維持するため）
-        
+        self._save_current_screen()
         if self.current_trial_idx > 0:
             self.current_trial_idx -= 1
             self.load_trial()
 
-    # --- イベントハンドラ（通信エラー対策済み） ---
     def on_press(self, event):
         item = self.canvas.find_closest(event.x, event.y)[0]
         tags = self.canvas.gettags(item)
@@ -339,15 +331,11 @@ class TactileMapApp:
             self.drag_data["y"] = event.y
 
     def on_drag(self, event):
-        """ドラッグ中：円の外に出ないように制限する"""
         item = self.drag_data["item"]
         if item:
-            # マウスの移動量
             delta_x = event.x - self.drag_data["x"]
             delta_y = event.y - self.drag_data["y"]
             
-            # --- ここから制限ロジック ---
-            # 1. 現在のアイテムの中心座標を取得
             tags = self.canvas.gettags(item)
             target_tag = ""
             for tag in tags:
@@ -355,46 +343,30 @@ class TactileMapApp:
                     target_tag = tag
                     break
             
-            # アイテムの現在位置 (x1, y1, x2, y2)
             coords = self.canvas.coords(target_tag)
             cur_cx = (coords[0] + coords[2]) / 2
             cur_cy = (coords[1] + coords[3]) / 2
             
-            # 2. 移動「予定」の座標
             next_cx = cur_cx + delta_x
             next_cy = cur_cy + delta_y
             
-            # 3. キャンバス中心からの距離を計算
             center_x, center_y = CANVAS_SIZE / 2, CANVAS_SIZE / 2
             vec_x = next_cx - center_x
             vec_y = next_cy - center_y
             dist = math.sqrt(vec_x**2 + vec_y**2)
             
-            # 4. 制限半径 (円の半径 - アイテムの半径)
-            # これを超えるとアイテムが円からはみ出す
             max_dist = ARENA_RADIUS - NODE_RADIUS
-            
-            # 5. もしはみ出るなら、境界線上に押し戻す
             real_delta_x = delta_x
             real_delta_y = delta_y
             
             if dist > max_dist:
-                # 距離を max_dist に縮める比率
                 scale = max_dist / dist
                 clamped_cx = center_x + vec_x * scale
                 clamped_cy = center_y + vec_y * scale
-                
-                # 実際に移動させるべき量（補正済み）
                 real_delta_x = clamped_cx - cur_cx
                 real_delta_y = clamped_cy - cur_cy
 
-            # 6. 移動実行
             self.canvas.move(target_tag, real_delta_x, real_delta_y)
-
-            # マウス位置の更新（ここは元のマウス位置を使わないと操作感が悪くなるので注意）
-            # ただし、壁に当たったときは「マウス位置の更新」をスキップするか、
-            # あるいはそのままにするかで操作感が変わります。
-            # シンプルに「マウス座標」は常に更新しつつ、描画だけ止めるのが一般的です。
             self.drag_data["x"] = event.x
             self.drag_data["y"] = event.y
 
@@ -403,31 +375,34 @@ class TactileMapApp:
         try:
             self.autd.send(Static(intensity=0))
         except Exception as e:
-            print(f"Warning (Stop): Communication failed. Ignored. ({e})")
+            # Dummyの場合はエラーにならないが、念のため
+            pass
 
     def play_stimulus(self, stim_id):
         params = self.all_params[stim_id]
         print(f"Playing ID:{stim_id} | Dist:{params['dist']}, Velo:{params['velo']}, AM:{params['am_freq']}")
 
-        if params['am_freq'] == 0:
-            m = Static(intensity=255)
-        else:
-            m = Sine(freq=params['am_freq'] * Hz, option=SineOption(intensity=255))
-
-        g = FociSTM(
-            foci=generate_points(params['dist'], self.center),
-            config=params['stm_freq'] * Hz,
-        )
-
+        # Dummyモードの場合はここでpyautd3のオブジェクト生成もしない方が安全だが
+        # importできているならオブジェクト生成自体はエラーにならないためそのまま
         try:
+            if params['am_freq'] == 0:
+                m = Static(intensity=255)
+            else:
+                m = Sine(freq=params['am_freq'] * Hz, option=SineOption(intensity=255))
+
+            g = FociSTM(
+                foci=generate_points(params['dist'], self.center),
+                config=params['stm_freq'] * Hz,
+            )
             self.autd.send((m, g))
         except Exception as e:
-             print(f"Warning (Play): Communication failed. Ignored. ({e})")
+             # pyautd3がない環境やその他のエラー
+             # print(f"Mock Play: (Commands skipped)")
+             pass
 
     def save_and_quit(self):
         filename = f"experiment_result_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         
-        # Noneを除外（万が一未実施のデータがあっても保存時にエラーにならないように）
         valid_results = [r for r in self.results if r is not None]
 
         final_export = {
@@ -448,43 +423,13 @@ class TactileMapApp:
 
 # --- メイン処理 ---
 if __name__ == "__main__":
-    # --- デバイス構成 (元のコードの設定を使用) ---
-    # ※動作確認用: Simulator
-    # link = Simulator("127.0.0.1:8080")
+    print("--------------------------------------------------")
+    print("   GUI CHECK MODE (No Hardware Connection)   ")
+    print("--------------------------------------------------")
     
-    # 本番用設定（ユーザー提供のリスト）
-    devices = [
-            AUTD3(pos=[0.0, 2*h, 10.0], rot=EulerAngles.ZYZ(np.pi * rad, - np.pi/2 * rad, 0.0 * rad)),
-            AUTD3(pos=[0.0, 2*h, w+10.0], rot=EulerAngles.ZYZ(np.pi * rad, - np.pi/2 * rad, 0.0 * rad)),
-            AUTD3(pos=[0.0, h, w+10.0], rot=EulerAngles.ZYZ(np.pi * rad, - np.pi/2 * rad, 0.0 * rad)),
-            AUTD3(pos=[0.0, h, 10.0], rot=EulerAngles.ZYZ(np.pi * rad, - np.pi/2 * rad, 0.0 * rad)),
-            AUTD3(pos=[178.0, h, 0.0], rot=EulerAngles.ZYZ(np.pi * rad, 0.0 * rad, 0.0 * rad)),
-            AUTD3(pos=[178.0, 2*h, 0.0], rot=EulerAngles.ZYZ(np.pi * rad, 0.0 * rad, 0.0 * rad)),
-            AUTD3(pos=[178.0 + w, 2*h, 0.0], rot=EulerAngles.ZYZ(np.pi * rad, 0.0 * rad, 0.0 * rad)),
-            AUTD3(pos=[178.0 + w, h, 0.0], rot=EulerAngles.ZYZ(np.pi * rad, 0.0 * rad, 0.0 * rad)),
-            AUTD3(pos=[2*w-2.0, h-141.2, 0.0], rot=[1, 0, 0, 0]),
-            AUTD3(pos=[2*w-2.0, 2*h-141.2, 0.0], rot=[1, 0, 0, 0]),
-            AUTD3(pos=[565.0, 2*h, w], rot=EulerAngles.ZYZ(np.pi * rad, np.pi/2 * rad, 0.0 * rad)),
-            AUTD3(pos=[565.0, h, w], rot=EulerAngles.ZYZ(np.pi * rad, np.pi/2 * rad, 0.0 * rad)),
-            AUTD3(pos=[565.0, h, 2*w], rot=EulerAngles.ZYZ(np.pi * rad, np.pi/2 * rad, 0.0 * rad)),
-            AUTD3(pos=[565.0, 2*h, 2*w], rot=EulerAngles.ZYZ(np.pi * rad, np.pi/2 * rad, 0.0 * rad)),
-        ]
-
-    try:
-        # Simulatorの場合はこちら
-        # with Controller.open(devices, Simulator("127.0.0.1:8080")) as autd:
-
-        # 実機の場合はこちら
-        with Controller.open(devices, EtherCrab(err_handler=err_handler, option=EtherCrabOption())) as autd:
-            autd.send(Silencer.disable())
-            
-            root = tk.Tk()
-            app = TactileMapApp(root, autd)
-            root.mainloop()
-            
-    except Exception as e:
-        print(f"Error: {e}")
-        # GUIのみテスト用
-        # root = tk.Tk()
-        # app = TactileMapApp(root, None) # autd=Noneで起動できるよう調整が必要
-        # root.mainloop()
+    # 接続処理をスキップし、DummyAUTDを使用する
+    dummy_autd = DummyAUTD()
+    
+    root = tk.Tk()
+    app = TactileMapApp(root, dummy_autd)
+    root.mainloop()
