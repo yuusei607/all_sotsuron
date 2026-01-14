@@ -104,12 +104,13 @@ class GreedyTrialGenerator:
         print(f"Generated {len(self.trials)} trials to cover all pairs.")
 
 # --- 幾何計算用の関数 ---
-def generate_points(distance, center):
+def generate_points(distance, center, num_points=1000):
+    """ランダムウォークでnum_points点の軌道を生成"""
     points = []
     # ランダムウォークの初期点
     current_point = np.array([random.uniform(0.0, 10.0), random.uniform(0.0, 10.0), 0.0])
     points.append(center + current_point)
-    for _ in range(999): # 1000点分
+    for _ in range(num_points - 1):
         while True:
             angle = random.uniform(0, 2 * np.pi)
             next_x = current_point[0] + distance * np.cos(angle)
@@ -120,6 +121,51 @@ def generate_points(distance, center):
                 points.append(center + current_point)
                 break
     return points
+
+
+def is_valid_trajectory(points, center, centroid_threshold=2.0, std_threshold=1.5, range_threshold=6.0):
+    """軌道の妥当性をチェック"""
+    # center からの相対座標に変換
+    coords = np.array(points) - center
+    coords = coords[:, :2]  # x, y のみ
+    
+    # 1. 重心チェック（中心は5,5）
+    centroid = np.mean(coords, axis=0)
+    centroid_dist = np.linalg.norm(centroid - 5.0)
+    if centroid_dist > centroid_threshold:
+        return False
+    
+    # 2. 標準偏差チェック
+    std_x, std_y = np.std(coords[:, 0]), np.std(coords[:, 1])
+    if std_x < std_threshold or std_y < std_threshold:
+        return False
+    
+    # 3. バウンディングボックスチェック
+    range_x = np.max(coords[:, 0]) - np.min(coords[:, 0])
+    range_y = np.max(coords[:, 1]) - np.min(coords[:, 1])
+    if range_x < range_threshold or range_y < range_threshold:
+        return False
+    
+    return True
+
+
+def generate_valid_trajectory(distance, center, max_attempts=10):
+    """条件を満たす軌道を生成（リトライ付き）"""
+    # distに応じてポイント数を決定
+    if distance < 1.0:  # 細かいステップの場合
+        num_points = 100000
+    else:
+        num_points = 1000
+    
+    for attempt in range(max_attempts):
+        trajectory = generate_points(distance, center, num_points)
+        if is_valid_trajectory(trajectory, center):
+            print(f"  Valid trajectory found for dist={distance} on attempt {attempt + 1}")
+            return trajectory
+    
+    # max_attempts回試してもダメな場合は最後の軌道を返す（警告付き）
+    print(f"  Warning: Could not find valid trajectory for dist={distance} after {max_attempts} attempts")
+    return trajectory
 
 # --- GUIアプリケーションクラス ---
 # --- GUIアプリケーションクラス ---
@@ -154,26 +200,31 @@ class TactileMapApp:
         self.load_trial()
 
     def _generate_stimuli_params(self):
-        """18パターンの刺激パラメータを生成"""
+        """18パターンの刺激パラメータを生成（軌道も事前生成）"""
         distances = [0.05, 4.0] 
         velocities = [10, 100, 1000]
         am_freqs = [0, 20, 100]
         
+        print("Generating stimuli with pre-computed trajectories...")
         params = []
         idx = 0
         for dist in distances:
             for velo in velocities:
                 for am in am_freqs:
                     freq = velo / (1000 * dist)
+                    # 軌道を事前生成（条件を満たすまでリトライ）
+                    trajectory = generate_valid_trajectory(dist, self.center)
                     params.append({
                         "id": idx,
                         "dist": dist,
                         "velo": velo,
                         "am_freq": am,
                         "stm_freq": freq,
-                        "color": "#{:06x}".format(random.randint(0, 0xFFFFFF))
+                        "color": "#{:06x}".format(random.randint(0, 0xFFFFFF)),
+                        "trajectory": trajectory  # 事前生成した軌道を保存
                     })
                     idx += 1
+        print(f"Generated {len(params)} stimuli with valid trajectories.")
         return params
 
     def _create_widgets(self):
@@ -433,7 +484,7 @@ class TactileMapApp:
             m = Sine(freq=params['am_freq'] * Hz, option=SineOption(intensity=255))
 
         g = FociSTM(
-            foci=generate_points(params['dist'], self.center),
+            foci=params['trajectory'],  # 事前生成した軌道を使用（再現性確保）
             config=params['stm_freq'] * Hz,
         )
 
