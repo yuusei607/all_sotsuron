@@ -123,51 +123,6 @@ def generate_points(distance, center, num_points=1000):
     return points
 
 
-def is_valid_trajectory(points, center, centroid_threshold=2.0, std_threshold=1.5, range_threshold=6.0):
-    """軌道の妥当性をチェック"""
-    # center からの相対座標に変換
-    coords = np.array(points) - center
-    coords = coords[:, :2]  # x, y のみ
-    
-    # 1. 重心チェック（中心は5,5）
-    centroid = np.mean(coords, axis=0)
-    centroid_dist = np.linalg.norm(centroid - 5.0)
-    if centroid_dist > centroid_threshold:
-        return False
-    
-    # 2. 標準偏差チェック
-    std_x, std_y = np.std(coords[:, 0]), np.std(coords[:, 1])
-    if std_x < std_threshold or std_y < std_threshold:
-        return False
-    
-    # 3. バウンディングボックスチェック
-    range_x = np.max(coords[:, 0]) - np.min(coords[:, 0])
-    range_y = np.max(coords[:, 1]) - np.min(coords[:, 1])
-    if range_x < range_threshold or range_y < range_threshold:
-        return False
-    
-    return True
-
-
-def generate_valid_trajectory(distance, center, max_attempts=10):
-    """条件を満たす軌道を生成（リトライ付き）"""
-    # distに応じてポイント数を決定
-    if distance < 1.0:  # 細かいステップの場合
-        num_points = 100000
-    else:
-        num_points = 1000
-    
-    for attempt in range(max_attempts):
-        trajectory = generate_points(distance, center, num_points)
-        if is_valid_trajectory(trajectory, center):
-            print(f"  Valid trajectory found for dist={distance} on attempt {attempt + 1}")
-            return trajectory
-    
-    # max_attempts回試してもダメな場合は最後の軌道を返す（警告付き）
-    print(f"  Warning: Could not find valid trajectory for dist={distance} after {max_attempts} attempts")
-    return trajectory
-
-# --- GUIアプリケーションクラス ---
 # --- GUIアプリケーションクラス ---
 class TactileMapApp:
     def __init__(self, root, autd_controller, participant_name=""):
@@ -200,7 +155,20 @@ class TactileMapApp:
         self.load_trial()
 
     def _generate_stimuli_params(self):
-        """18パターンの刺激パラメータを生成（軌道も事前生成）"""
+        """18パターンの刺激パラメータを生成（シード値から軌道を再現）"""
+        # シード値ファイルを読み込む
+        seeds_file = os.path.join(os.path.dirname(__file__), "stimuli_seeds.json")
+        
+        if not os.path.exists(seeds_file):
+            raise FileNotFoundError(
+                f"stimuli_seeds.json not found at {seeds_file}. "
+                "Please run generate_seeds.py first."
+            )
+        
+        with open(seeds_file, "r") as f:
+            seeds_data = json.load(f)
+        print(f"Loaded seeds from {seeds_file}")
+        
         distances = [0.05, 4.0] 
         velocities = [10, 100, 1000]
         am_freqs = [0, 20, 100]
@@ -211,9 +179,16 @@ class TactileMapApp:
         for dist in distances:
             for velo in velocities:
                 for am in am_freqs:
-                    freq = velo / (1000 * dist)
-                    # 軌道を事前生成（条件を満たすまでリトライ）
-                    trajectory = generate_valid_trajectory(dist, self.center)
+                    freq = velo / (1000 * dist) if dist > 1.0 else velo / (100000 * dist)
+                    num_points = 100000 if dist < 1.0 else 1000
+                    
+                    # シード値から軌道を再生成
+                    seed = seeds_data["stimuli"][idx]["seed"]
+                    random.seed(seed)
+                    np.random.seed(seed)
+                    trajectory = generate_points(dist, self.center, num_points)
+                    print(f"  Stimulus {idx}: Using seed {seed}")
+                    
                     params.append({
                         "id": idx,
                         "dist": dist,
@@ -221,7 +196,7 @@ class TactileMapApp:
                         "am_freq": am,
                         "stm_freq": freq,
                         "color": "#{:06x}".format(random.randint(0, 0xFFFFFF)),
-                        "trajectory": trajectory  # 事前生成した軌道を保存
+                        "trajectory": trajectory
                     })
                     idx += 1
         print(f"Generated {len(params)} stimuli with valid trajectories.")
