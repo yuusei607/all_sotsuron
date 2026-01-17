@@ -1,0 +1,326 @@
+[
+    {
+        "id": 0,
+        "parameters": {
+            "dist": 0.05,
+            "velo": 10,
+            "am_freq": 0
+        },
+        "position": {
+            "x": 342,
+            "y": 525
+        }
+    },
+    {
+        "id": 1,
+        "parameters": {
+            "dist": 0.05,
+            "velo": 10,
+            "am_freq": 20
+        },
+        "position": {
+            "x": 493,
+            "y": 74
+        }
+    },
+    {
+        "id": 2,
+        "parameters": {
+            "dist": 0.05,
+            "velo": 10,
+            "am_freq": 100
+        },
+        "position": {
+            "x": 186,
+            "y": 564
+        }
+    },
+    {
+        "id": 3,
+        "parameters": {
+            "dist": 0.05,
+            "velo": 100,
+            "am_freq": 0
+        },
+        "position": {
+            "x": 704,
+            "y": 306
+        }
+    },
+    {
+        "id": 4,
+        "parameters": {
+            "dist": 0.05,
+            "velo": 100,
+            "am_freq": 20
+        },
+        "position": {
+            "x": 75,
+            "y": 285
+        }
+    },
+    {
+        "id": 5,
+        "parameters": {
+            "dist": 0.05,
+            "velo": 100,
+            "am_freq": 100
+        },
+        "position": {
+            "x": 456,
+            "y": 511
+        }
+    },
+    {
+        "id": 6,
+        "parameters": {
+            "dist": 0.05,
+            "velo": 1000,
+            "am_freq": 0
+        },
+        "position": {
+            "x": 415,
+            "y": 412
+        }
+    },
+    {
+        "id": 7,
+        "parameters": {
+            "dist": 0.05,
+            "velo": 1000,
+            "am_freq": 20
+        },
+        "position": {
+            "x": 358,
+            "y": 123
+        }
+    },
+    {
+        "id": 8,
+        "parameters": {
+            "dist": 0.05,
+            "velo": 1000,
+            "am_freq": 100
+        },
+        "position": {
+            "x": 592,
+            "y": 246
+        }
+    },
+    {
+        "id": 9,
+        "parameters": {
+            "dist": 0.5,
+            "velo": 10,
+            "am_freq": 0
+        },
+        "position": {
+            "x": 596,
+            "y": 737
+        }
+    },
+    {
+        "id": 10,
+        "parameters": {
+            "dist": 0.5,
+            "velo": 10,
+            "am_freq": 20
+        },
+        "position": {
+            "x": 580,
+            "y": 477
+        }
+    },
+    {
+        "id": 11,
+        "parameters": {
+            "dist": 0.5,
+            "velo": 10,
+            "am_freq": 100
+        },
+        "position": {
+            "x": 498,
+            "y": 631
+        }
+    },
+    {
+        "id": 12,
+        "parameters": {
+            "dist": 0.5,
+            "velo": 100,
+            "am_freq": 0
+        },
+        "position": {
+            "x": 508,
+            "y": 169
+        }
+    },
+    {
+        "id": 13,
+        "parameters": {
+            "dist": 0.5,
+            "velo": 100,
+            "am_freq": 20
+        },
+        "position": {
+            "x": 626,
+            "y": 188
+        }
+    },
+    {
+        "id": 14,
+        "parameters": {
+            "dist": 0.5,
+            "velo": 100,
+            "am_freq": 100
+        },
+        "position": {
+            "x": 724,
+            "y": 442
+        }
+    },
+    {
+        "id": 15,
+        "parameters": {
+            "dist": 0.5,
+            "velo": 1000,
+            "am_freq": 0
+        },
+        "position": {
+            "x": 160,
+            "y": 448
+        }
+    },
+    {
+        "id": 16,
+        "parameters": {
+            "dist": 0.5,
+            "velo": 1000,
+            "am_freq": 20
+        },
+        "position": {
+            "x": 679,
+            "y": 538
+        }
+    },
+    {
+        "id": 17,
+        "parameters": {
+            "dist": 0.5,
+            "velo": 1000,
+            "am_freq": 100
+        },
+        "position": {
+            "x": 362,
+            "y": 704
+        }
+    },
+    {
+        "id": 18,
+        "parameters": {
+            "dist": 4.0,
+            "velo": 10,
+            "am_freq": 0
+        },
+        "position": {
+            "x": 527,
+            "y": 383
+        }
+    },
+    {
+        "id": 19,
+        "parameters": {
+            "dist": 4.0,
+            "velo": 10,
+            "am_freq": 20
+        },
+        "position": {
+            "x": 628,
+            "y": 145
+        }
+    },
+    {
+        "id": 20,
+        "parameters": {
+            "dist": 4.0,
+            "velo": 10,
+            "am_freq": 100
+        },
+        "position": {
+            "x": 744,
+            "y": 728
+        }
+    },
+    {
+        "id": 21,
+        "parameters": {
+            "dist": 4.0,
+            "velo": 100,
+            "am_freq": 0
+        },
+        "position": {
+            "x": 361,
+            "y": 341
+        }
+    },
+    {
+        "id": 22,
+        "parameters": {
+            "dist": 4.0,
+            "velo": 100,
+            "am_freq": 20
+        },
+        "position": {
+            "x": 290,
+            "y": 228
+        }
+    },
+    {
+        "id": 23,
+        "parameters": {
+            "dist": 4.0,
+            "velo": 100,
+            "am_freq": 100
+        },
+        "position": {
+            "x": 186,
+            "y": 136
+        }
+    },
+    {
+        "id": 24,
+        "parameters": {
+            "dist": 4.0,
+            "velo": 1000,
+            "am_freq": 0
+        },
+        "position": {
+            "x": 108,
+            "y": 591
+        }
+    },
+    {
+        "id": 25,
+        "parameters": {
+            "dist": 4.0,
+            "velo": 1000,
+            "am_freq": 20
+        },
+        "position": {
+            "x": 237,
+            "y": 617
+        }
+    },
+    {
+        "id": 26,
+        "parameters": {
+            "dist": 4.0,
+            "velo": 1000,
+            "am_freq": 100
+        },
+        "position": {
+            "x": 58,
+            "y": 520
+        }
+    }
+]

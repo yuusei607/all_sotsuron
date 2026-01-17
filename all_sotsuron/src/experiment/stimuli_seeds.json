@@ -1,0 +1,131 @@
+{
+    "description": "Seed values for reproducible trajectory generation",
+    "stimuli": [
+        {
+            "id": 0,
+            "dist": 0.05,
+            "velo": 10,
+            "am_freq": 0,
+            "seed": 1930028551
+        },
+        {
+            "id": 1,
+            "dist": 0.05,
+            "velo": 10,
+            "am_freq": 20,
+            "seed": 1525998989
+        },
+        {
+            "id": 2,
+            "dist": 0.05,
+            "velo": 10,
+            "am_freq": 100,
+            "seed": 1763532500
+        },
+        {
+            "id": 3,
+            "dist": 0.05,
+            "velo": 100,
+            "am_freq": 0,
+            "seed": 278100081
+        },
+        {
+            "id": 4,
+            "dist": 0.05,
+            "velo": 100,
+            "am_freq": 20,
+            "seed": 974652721
+        },
+        {
+            "id": 5,
+            "dist": 0.05,
+            "velo": 100,
+            "am_freq": 100,
+            "seed": 1825529612
+        },
+        {
+            "id": 6,
+            "dist": 0.05,
+            "velo": 1000,
+            "am_freq": 0,
+            "seed": 2010211568
+        },
+        {
+            "id": 7,
+            "dist": 0.05,
+            "velo": 1000,
+            "am_freq": 20,
+            "seed": 335218597
+        },
+        {
+            "id": 8,
+            "dist": 0.05,
+            "velo": 1000,
+            "am_freq": 100,
+            "seed": 1798903413
+        },
+        {
+            "id": 9,
+            "dist": 4.0,
+            "velo": 10,
+            "am_freq": 0,
+            "seed": 1035244972
+        },
+        {
+            "id": 10,
+            "dist": 4.0,
+            "velo": 10,
+            "am_freq": 20,
+            "seed": 173664905
+        },
+        {
+            "id": 11,
+            "dist": 4.0,
+            "velo": 10,
+            "am_freq": 100,
+            "seed": 14751954
+        },
+        {
+            "id": 12,
+            "dist": 4.0,
+            "velo": 100,
+            "am_freq": 0,
+            "seed": 496919540
+        },
+        {
+            "id": 13,
+            "dist": 4.0,
+            "velo": 100,
+            "am_freq": 20,
+            "seed": 2060779270
+        },
+        {
+            "id": 14,
+            "dist": 4.0,
+            "velo": 100,
+            "am_freq": 100,
+            "seed": 652662934
+        },
+        {
+            "id": 15,
+            "dist": 4.0,
+            "velo": 1000,
+            "am_freq": 0,
+            "seed": 237664407
+        },
+        {
+            "id": 16,
+            "dist": 4.0,
+            "velo": 1000,
+            "am_freq": 20,
+            "seed": 1468875586
+        },
+        {
+            "id": 17,
+            "dist": 4.0,
+            "velo": 1000,
+            "am_freq": 100,
+            "seed": 137231459
+        }
+    ]
+}
